@@ -248,7 +248,7 @@ const MegaDropdown = ({ items, onLinkClick, onClose }: MegaDropdownProps) => {
 
     return (
         <div 
-            className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-[650px] rounded-2xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-300 overflow-hidden"
+            className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-[650px] rounded-2xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-300 overflow-hidden"
             // Use pointer events auto to allow interaction when visible
             style={{ pointerEvents: 'auto', opacity: 1 }}
         >
@@ -300,32 +300,11 @@ const navItems: NavItem[] = [
     { id: 'contact', label: 'Contact', href: '#contact', icon: Phone },
 ];
 
-const testimonials = [
-    {
-      quote: "IDMS transformed our data management completely. The centralized platform made everything so much more efficient.",
-      name: "Sarah Chen",
-      title: "Data Manager, TechCorp",
-      avatar: "/images/avatar1.jpg"
-    },
-    {
-      quote: "The analytics and reporting features are outstanding. We can now make data-driven decisions with confidence.",
-      name: "Michael Rodriguez",
-      title: "CEO, DataFlow Solutions",
-      avatar: "/images/avatar2.jpg"
-    },
-    {
-      quote: "IDMS streamlined our entire business process. The integration capabilities are remarkable.",
-      name: "Jennifer Kim",
-      title: "Operations Director, GlobalTech",
-      avatar: "/images/avatar3.jpg"
-    },
-];
 
 export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [scrollY, setScrollY] = useState(0);
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   // Renamed to better reflect its function across desktop/mobile
   const [isProductsDropdownOpen, setIsProductsDropdownOpen] = useState(false); 
   const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
@@ -357,13 +336,6 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Effect for testimonial rotation
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Effect for initial stat load animation
   useEffect(() => {
@@ -441,7 +413,7 @@ export default function HomePage() {
                       {item.label} <ChevronRight className={`w-4 h-4 ml-1 transform transition-transform ${isAboutDropdownOpen ? 'rotate-90' : 'rotate-0'}`} />
                     </Link>
                     {isAboutDropdownOpen && (
-                      <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 p-2">
+                      <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 p-2">
                         <Link href="/about" className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg">About</Link>
                         <Link href="/about/team" className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg">Team</Link>
                         <Link href="/contact" className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg">Contact Us</Link>
@@ -684,19 +656,38 @@ href="/login"
           </div>
         </section>
 
-        {/* Trusted Companies Section */}
+        {/* Industries Section */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <AnimatedOnScroll animationClass="animate-slide-up">
-              <h2 className="text-2xl font-bold text-center text-gray-800 mb-12">
-                Trusted by 10,000+ Organizations
+              <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
+                Built for Growing Teams and Modern Businesses
               </h2>
             </AnimatedOnScroll>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-60">
-              {['Microsoft', 'Google', 'Amazon', 'IBM', 'Oracle', 'Salesforce'].map((company, index) => (
-                <div key={index} className="text-2xl font-bold text-gray-400 hover:text-gray-600 transition-colors">
-                  {company}
-                </div>
+            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200">
+              <p className="text-lg text-center text-gray-600 mb-12 max-w-3xl mx-auto">
+                Whether you're a startup or an enterprise, IDMS helps you manage data smarter and scale effortlessly.
+              </p>
+            </AnimatedOnScroll>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              {[
+                { name: 'Finance', icon: DollarSign, color: 'text-green-600 bg-green-100' },
+                { name: 'Healthcare', icon: Shield, color: 'text-blue-600 bg-blue-100' },
+                { name: 'Education', icon: BookOpen, color: 'text-purple-600 bg-purple-100' },
+                { name: 'Enterprise IT', icon: Settings, color: 'text-orange-600 bg-orange-100' }
+              ].map((industry, index) => (
+                <AnimatedOnScroll 
+                  key={index} 
+                  animationClass="animate-slide-up" 
+                  delayClass={`delay-${(index + 1) * 200}`}
+                >
+                  <div className="text-center p-6 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${industry.color}`}>
+                      <industry.icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-semibold text-gray-800">{industry.name}</h3>
+                  </div>
+                </AnimatedOnScroll>
               ))}
             </div>
           </div>
@@ -804,29 +795,29 @@ href="/login"
         </section>
 
         {/* Call to Action Section */}
-        <section className="py-20 bg-blue-600" id="cta">
+        <section className="py-20 bg-gray-50" id="cta">
           <div className="container mx-auto px-4 text-center">
             <AnimatedOnScroll animationClass="animate-slide-up" threshold={0.3}>
-                <h2 className="text-4xl font-bold text-white mb-4">
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">
                     Ready to Transform Your Data Management?
                 </h2>
             </AnimatedOnScroll>
             <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200" threshold={0.3}>
-                <p className="text-xl text-blue-100 mb-8">
-                    Join thousands of organizations already streamlining their data operations with IDMS.
+                <p className="text-xl text-gray-600 mb-8">
+                    Get started with IDMS and experience the future of intelligent data management.
                 </p>
             </AnimatedOnScroll>
              <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-400" threshold={0.3}>
                  <div className="flex flex-col sm:flex-row justify-center gap-4">
                      <Link
                          href="/pricing"
-                         className="px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-full shadow-xl hover:bg-gray-100 transition-all transform hover:scale-105"
+                         className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg shadow-xl hover:bg-blue-700 transition-all transform hover:scale-105"
                      >
-                         Start Your 14-Day Free Trial
+                         Get Started
                      </Link>
                      <a
                          href="#"
-                         className="px-8 py-4 border-2 border-white text-white text-lg font-semibold rounded-full hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105"
+                         className="px-8 py-4 border-2 border-blue-600 text-blue-600 text-lg font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-105"
                      >
                          Schedule a Demo
                      </a>
@@ -835,50 +826,82 @@ href="/login"
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section id="testimonials" className="py-20 bg-white">
+        {/* Our Vision Section */}
+        <section id="vision" className="py-20 bg-white">
           <div className="container mx-auto px-4">
             <AnimatedOnScroll animationClass="animate-slide-up">
                 <h2 className="text-3xl font-bold text-center text-gray-800 mb-4">
-                    Hear it from 30,000+ Data Leaders like YOU
+                    Our Vision
                 </h2>
             </AnimatedOnScroll>
             <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200">
-                <p className="text-xl text-center text-gray-600 mb-12">
-                    Hear from the people who use IDMS every day.
+                <p className="text-xl text-center text-gray-600 mb-12 max-w-3xl mx-auto">
+                    We're on a mission to make data management simple, secure, and accessible to every business.
                 </p>
             </AnimatedOnScroll>
 
-            {/* Testimonial Carousel */}
-            <div className="relative max-w-3xl mx-auto h-[250px] overflow-hidden">
-              {testimonials.map((testimonial, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 p-8 bg-gray-50 rounded-xl shadow-lg transition-opacity duration-1000 ease-in-out transform flex flex-col items-center justify-center text-center ${
-                    currentTestimonial === index ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                  }`}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {[
+                {
+                  icon: Rocket,
+                  title: "Simplicity",
+                  description: "Intuitive tools that work out of the box.",
+                  color: "text-blue-600 bg-blue-100"
+                },
+                {
+                  icon: Shield,
+                  title: "Security",
+                  description: "Enterprise-grade protection for all your data.",
+                  color: "text-green-600 bg-green-100"
+                },
+                {
+                  icon: Settings,
+                  title: "Automation",
+                  description: "Save hours with smart workflows.",
+                  color: "text-purple-600 bg-purple-100"
+                }
+              ].map((pillar, index) => (
+                <AnimatedOnScroll 
+                  key={index} 
+                  animationClass="animate-slide-up" 
+                  delayClass={`delay-${(index + 1) * 200}`}
                 >
-                  <Star className="w-5 h-5 text-yellow-500 fill-yellow-500 mb-3" />
-                  <p className="text-lg italic text-gray-700 mb-4">"{testimonial.quote}"</p>
-                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                  <div className="text-sm text-teal-600">{testimonial.title}</div>
-                </div>
+                  <div className="text-center p-8 bg-gray-50 rounded-xl hover:shadow-lg transition-all duration-300">
+                    <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${pillar.color}`}>
+                      <pillar.icon className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{pillar.title}</h3>
+                    <p className="text-gray-600">{pillar.description}</p>
+                  </div>
+                </AnimatedOnScroll>
               ))}
-
-              {/* Navigation Dots */}
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
-                {testimonials.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentTestimonial(index)}
-                    className={`w-3 h-3 rounded-full transition-colors duration-300 ${
-                      currentTestimonial === index ? 'bg-teal-600' : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                    aria-label={`Go to testimonial ${index + 1}`}
-                  />
-                ))}
-              </div>
             </div>
+          </div>
+        </section>
+
+        {/* Early Access Program Section */}
+        <section className="py-20 bg-blue-600">
+          <div className="container mx-auto px-4 text-center">
+            <AnimatedOnScroll animationClass="animate-slide-up" threshold={0.3}>
+                <h2 className="text-3xl font-bold text-white mb-4">
+                    Join Our Early Access Program
+                </h2>
+            </AnimatedOnScroll>
+            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200" threshold={0.3}>
+                <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+                    Be among the first to experience smarter data management with IDMS.
+                </p>
+            </AnimatedOnScroll>
+             <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-400" threshold={0.3}>
+                 <div className="flex flex-col sm:flex-row justify-center gap-4">
+                     <button className="px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg shadow-xl hover:bg-gray-100 transition-all transform hover:scale-105">
+                         Join Beta
+                     </button>
+                     <button className="px-8 py-4 border-2 border-white text-white text-lg font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105">
+                         Get Early Access
+                     </button>
+                 </div>
+             </AnimatedOnScroll>
           </div>
         </section>
       </main>
@@ -950,18 +973,19 @@ href="/login"
               </div>
               <div className="flex items-center">
                 <Phone className="w-4 h-4 mr-2 text-blue-400" />
-                <span>+1 (555) 123-4567</span>
+                <span>080-48905416</span>
               </div>
               <div className="flex items-start">
                 <MapPin className="w-4 h-4 mt-1 mr-2 text-blue-400 flex-shrink-0" />
-                <span>123 Data Street, Tech City, CA 94000</span>
+                <span>2nd floor Hillside Meadows Layout, Adityanagar, Vidyaranyapura,
+Bengaluru - 560097</span>
               </div>
             </div>
           </div>
 
         </div>
         <div className="border-t border-gray-700 mt-8 pt-6 container mx-auto px-4 text-center text-sm text-gray-400">
-          &copy; {new Date().getFullYear()} IDMS Technologies Private Limited. All rights reserved.
+          &copy; {new Date().getFullYear()}  Tiranga Aerospace, All Rights Reserved.
         </div>
       </footer>
 

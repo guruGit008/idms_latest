@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   Database, Users, DollarSign, Store, Target, BarChart3, FileText, Shield, Settings,
@@ -68,7 +69,7 @@ const MegaDropdown = ({ items, onLinkClick, onClose }: { items: ProductItemData[
   const col1 = items.slice(0, col1Count);
   const col2 = items.slice(col1Count);
   return (
-    <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-[650px] rounded-2xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-300 overflow-hidden" style={{ pointerEvents: 'auto', opacity: 1 }}>
+    <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-[650px] rounded-2xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-300 overflow-hidden" style={{ pointerEvents: 'auto', opacity: 1 }}>
       <div className="grid grid-cols-2 p-5 gap-y-6 gap-x-8">
         <div className="space-y-6 border-r pr-4">
           {col1.map(item => (
@@ -164,61 +165,60 @@ const pricingPlans: PricingPlan[] = [
     {
         id: 'foundation',
         name: 'FOUNDATION',
-        description: 'For companies that are just getting started with data automation',
-        price: '₹9,999',
-        period: 'month',
-        additionalPrice: '(Upto 100 Users)',
+        description: 'Best for startups getting started with HR digitalization',
+        price: 'Custom',
+        period: 'pricing',
+        additionalPrice: 'Tailored to your needs',
         features: [
-            'Data Management & Storage',
-            'Basic Analytics & Reporting',
-            'User Management (Up to 100)',
+            'Employee Data Management',
+            'Basic HR Reports',
+            'Employee Self-Service Portal',
             'Document Management',
-            'Basic Security Features',
+            'Basic Access Control',
             'Email Support',
             'Mobile App Access',
-            'Basic Integrations',
+            'Standard Integrations',
             'Data Backup & Recovery',
-            'Standard Compliance'
+            'Basic Compliance Tools'
         ],
         color: 'border-blue-500',
         icon: Database
     },
     {
-        id: 'strength',
-        name: 'STRENGTH',
-        description: 'Scaling with advanced automation & data insights',
-        price: '₹12,999',
-        period: 'month',
-        additionalPrice: '(Upto 100 Users)',
+        id: 'professional',
+        name: 'PROFESSIONAL',
+        description: 'Designed for growing companies needing automation & team management',
+        price: 'Custom',
+        period: 'pricing',
+        additionalPrice: 'Tailored to your needs',
         features: [
             'All Foundation Features+',
-            'Advanced Analytics & BI',
+            'Advanced HR Analytics',
             'Custom Dashboards',
-            'Advanced Security & Compliance',
+            'Advanced Access Control',
             'API Access & Webhooks',
             'Priority Support',
             'Advanced Integrations',
-            'Data Visualization Tools',
             'Custom Reports Builder',
             'Advanced User Roles',
             'Audit Logs & Monitoring',
-            'Performance Optimization'
+            'Workflow Automation',
+            'Team Management Tools'
         ],
         highlighted: true,
         color: 'border-green-500',
         icon: BarChart3
     },
     {
-        id: 'growth',
-        name: 'GROWTH',
-        description: 'With in-built performance management and business intelligence',
-        price: '₹15,999',
-        period: 'month',
-        additionalPrice: '(Upto 100 Users)',
+        id: 'enterprise',
+        name: 'ENTERPRISE',
+        description: 'Tailored HR suite for large teams with compliance and reporting needs',
+        price: 'Custom',
+        period: 'pricing',
+        additionalPrice: 'Tailored to your needs',
         features: [
-            'All Strength Features+',
-            'AI-Powered Insights',
-            'Predictive Analytics',
+            'All Professional Features+',
+            'Advanced Compliance Management',
             'Custom Workflows',
             'Advanced Data Processing',
             'Real-time Collaboration',
@@ -226,38 +226,20 @@ const pricingPlans: PricingPlan[] = [
             'Dedicated Account Manager',
             'Custom Training',
             'SLA Guarantee',
-            'Advanced Compliance Tools',
-            'Enterprise Security'
-        ],
-        color: 'border-purple-500',
-        icon: TrendingUp
-    },
-    {
-        id: 'enterprise',
-        name: 'ENTERPRISE',
-        description: 'Custom solutions for large organizations',
-        price: 'Custom',
-        period: 'pricing',
-        features: [
-            'All Growth Features+',
-            'Unlimited Users',
-            'Custom Development',
-            'On-premise Deployment',
-            '24/7 Dedicated Support',
-            'Custom Integrations',
             'Advanced Security Controls',
-            'Compliance Management',
-            'Data Governance Tools',
             'Multi-tenant Architecture',
-            'Custom Branding',
             'Training & Consulting'
         ],
-        color: 'border-orange-500',
+        color: 'border-purple-500',
         icon: Building
     }
 ];
 
 const faqs = [
+    {
+        question: "Why don't you show prices publicly?",
+        answer: "Because each company has unique needs. We believe in offering the best value through personalized pricing based on your size, features, and support requirements. This ensures you only pay for what you actually need and use."
+    },
     {
         question: "Who has access to data and other sensitive information?",
         answer: "IDMS provides robust privacy controls to ensure your data remains secure. Access is restricted to authorized personnel within your organization, and our support team can only view data if explicitly granted permission by you. This level of privacy control is unique to IDMS, setting us apart in the industry."
@@ -272,11 +254,7 @@ const faqs = [
     },
     {
         question: "What kind of support do you provide?",
-        answer: "We offer comprehensive support including email support for Foundation plans, priority support for Strength and Growth plans, and dedicated 24/7 support for Enterprise customers. Our support team includes data management experts who can help with implementation, troubleshooting, and best practices."
-    },
-    {
-        question: "Can I upgrade or downgrade my plan anytime?",
-        answer: "Yes, you can upgrade your plan anytime to access more features. Downgrades are available at the end of your current billing cycle. We also offer prorated billing for mid-cycle upgrades to ensure you only pay for what you use."
+        answer: "We offer comprehensive support including email support for Foundation plans, priority support for Professional plans, and dedicated 24/7 support for Enterprise customers. Our support team includes data management experts who can help with implementation, troubleshooting, and best practices."
     },
     {
         question: "Do you offer custom integrations?",
@@ -319,14 +297,15 @@ export default function PricingPage() {
                 <div className="container mx-auto flex items-center justify-between p-4">
                     {/* Logo/Brand */}
                     <Link href="/" className="flex items-center cursor-pointer group">
-                        <div className="flex items-center space-x-3">
-                            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-3 rounded-xl">
-                                <Database className="w-8 h-8 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">IDMS</h1>
-                                <p className="text-sm text-gray-600 -mt-1">Intelligent Data Management System</p>
-                            </div>
+                        {/* INCREASED SIZE HERE: w-44 h-16 */}
+                        <div className="relative w-44 h-16"> 
+                            <Image
+                                src="/hrlogo.png" 
+                                alt="IDMS Intelligent Data Management System Logo"
+                                fill
+                                style={{ objectFit: 'contain' }}
+                                className="w-full h-full"
+                            />
                         </div>
                     </Link>
 
@@ -367,7 +346,7 @@ export default function PricingPage() {
                                   {item.label} <ChevronRight className={`w-4 h-4 ml-1 transform transition-transform ${isAboutDropdownOpen ? 'rotate-90' : 'rotate-0'}`} />
                                 </Link>
                                 {isAboutDropdownOpen && (
-                                  <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 p-2">
+                                  <div className="absolute left-1/2 transform -translate-x-1/2 mt-0 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 p-2">
                                     <Link href="/about" className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg">About</Link>
                                     <Link href="/about/team" className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg">Team</Link>
                                     <Link href="/contact" className="block px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg">Contact Us</Link>
@@ -514,153 +493,202 @@ export default function PricingPage() {
                     <div className="container mx-auto px-4 text-center">
                         <AnimatedOnScroll animationClass="animate-fade-in-down">
                             <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-                                Awesome doesn't have to be <span className="text-blue-600">expensive</span>
+                                Flexible Pricing for Every <span className="text-blue-600">Business Stage</span>
                             </h1>
                         </AnimatedOnScroll>
                         <AnimatedOnScroll animationClass="animate-fade-in-up" delayClass="delay-200">
                             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                                Loved by companies with 20 - 20,000 employees
+                                We're currently offering custom pricing tailored to your business needs. Whether you're a startup or an established company, we'll design the right plan for you.
                             </p>
                         </AnimatedOnScroll>
                         <AnimatedOnScroll animationClass="animate-fade-in-up" delayClass="delay-400">
-                            <p className="text-lg text-gray-500 mb-12">
-                                Global presence spanning across 150 countries
-                            </p>
+                            <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                <button className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105">
+                                    Request Custom Pricing
+                                </button>
+                                <button className="px-8 py-4 border-2 border-blue-600 text-blue-600 text-lg font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-105">
+                                    Schedule a Free Demo
+                                </button>
+                            </div>
                         </AnimatedOnScroll>
                     </div>
                 </section>
 
-                {/* Pricing Plans */}
-                <section className="py-20 bg-white">
+                {/* Single Pricing Plan */}
+                <section id="pricing" className="py-20 bg-white">
                     <div className="container mx-auto px-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {pricingPlans.map((plan, index) => (
-                                <AnimatedOnScroll 
-                                    key={plan.id} 
-                                    animationClass="animate-slide-up" 
-                                    delayClass={`delay-${index * 200}`}
-                                >
-                                    <div className={`relative p-8 bg-white rounded-2xl shadow-lg border-2 ${plan.color} hover:shadow-xl transition-all duration-300 ${
-                                        plan.highlighted ? 'transform scale-105 ring-4 ring-green-200' : ''
-                                    }`}>
-                                        {plan.highlighted && (
-                                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                                                <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                    Most Popular
+                        <div className="max-w-4xl mx-auto">
+                            <AnimatedOnScroll animationClass="animate-slide-up">
+                                <div className="text-center mb-12">
+                                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                                        Custom Pricing — Tailored to Your Needs
+                                    </h2>
+                                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                                        Every organization is unique. That's why we offer flexible pricing based on your team size, features, and goals.
+                                    </p>
+                                </div>
+                            </AnimatedOnScroll>
+
+                            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200">
+                                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12 max-w-2xl mx-auto">
+                                    <div className="text-center mb-8">
+                                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <Settings className="w-10 h-10 text-blue-600" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Custom HR Solution</h3>
+                                        <p className="text-gray-600 mb-6">
+                                            Get a personalized HR management system designed specifically for your business needs.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4 mb-8">
+                                        <div className="flex items-center">
+                                            <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                                            <span className="text-gray-700">No unnecessary tiers</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                                            <span className="text-gray-700">Pay only for what you need</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                                            <span className="text-gray-700">Personalized onboarding and support</span>
+                                        </div>
+                                    </div>
+
+                                    <button className="w-full py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105">
+                                        Request a Quote
+                                    </button>
+                                </div>
+                            </AnimatedOnScroll>
                                                 </div>
                                             </div>
-                                        )}
-                                        
-                                        <div className="text-center mb-8">
-                                            <plan.icon className={`w-12 h-12 mx-auto mb-4 ${plan.color.replace('border-', 'text-')}`} />
-                                            <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                                            <p className="text-gray-600 mb-4">{plan.description}</p>
-                                            <div className="mb-2">
-                                                <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                                                <span className="text-gray-600">/{plan.period}</span>
-                                            </div>
-                                            {plan.additionalPrice && (
-                                                <p className="text-sm text-gray-500">{plan.additionalPrice}</p>
-                                            )}
+                </section>
+
+                {/* How Pricing Works Section */}
+                <section className="py-20 bg-gray-50">
+                    <div className="container mx-auto px-4">
+                        <div className="max-w-4xl mx-auto">
+                            <AnimatedOnScroll animationClass="animate-slide-up">
+                                <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
+                                    How Our Pricing Works
+                                </h2>
+                            </AnimatedOnScroll>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                                <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200">
+                                    <div className="text-center">
+                                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Users className="w-8 h-8 text-blue-600" />
                                         </div>
-
-                                        <ul className="space-y-4 mb-8">
-                                            {plan.features.map((feature, featureIndex) => (
-                                                <li key={featureIndex} className="flex items-start">
-                                                    <Check className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                                                    <span className="text-gray-700">{feature}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-
-                                        <button
-                                            onClick={() => setSelectedPlan(plan.id)}
-                                            className={`w-full py-3 px-6 rounded-full font-semibold transition-all duration-300 ${
-                                                plan.highlighted
-                                                    ? 'bg-green-500 text-white hover:bg-green-600 transform hover:scale-105'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            {plan.id === 'enterprise' ? 'Contact Sales' : 'Get Started'}
-                                        </button>
+                                        <h3 className="text-xl font-semibold text-gray-900 mb-3">1. Tell us about your team</h3>
+                                        <p className="text-gray-600">
+                                            Share details about your team size, business goals, and specific HR requirements.
+                                        </p>
                                     </div>
                                 </AnimatedOnScroll>
-                            ))}
+                                
+                                <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-400">
+                                    <div className="text-center">
+                                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Settings className="w-8 h-8 text-green-600" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-gray-900 mb-3">2. We'll recommend the right setup</h3>
+                                        <p className="text-gray-600">
+                                            Based on your needs, we'll suggest the most relevant features and modules for your organization.
+                                        </p>
+                                    </div>
+                                </AnimatedOnScroll>
+                                
+                                <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-600">
+                                    <div className="text-center">
+                                        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <DollarSign className="w-8 h-8 text-purple-600" />
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-gray-900 mb-3">3. You'll receive a personalized quote</h3>
+                                        <p className="text-gray-600">
+                                            Get a custom quote that includes only what you need — no hidden fees or unnecessary features.
+                                        </p>
+                                    </div>
+                                </AnimatedOnScroll>
+                            </div>
+                            
+                            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-800">
+                                <div className="text-center">
+                                    <button className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105">
+                                        Talk to an Expert
+                                    </button>
+                                </div>
+                            </AnimatedOnScroll>
                         </div>
                     </div>
                 </section>
 
                 {/* FAQ Section */}
-                <section className="py-20 bg-gray-50">
+                <section className="py-20 bg-white">
                     <div className="container mx-auto px-4">
-                        <AnimatedOnScroll animationClass="animate-slide-up">
-                            <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-                                Frequently asked questions
-                            </h2>
-                        </AnimatedOnScroll>
+                        <div className="max-w-2xl mx-auto">
+                            <AnimatedOnScroll animationClass="animate-slide-up">
+                                <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
+                                    Frequently asked questions
+                                </h2>
+                            </AnimatedOnScroll>
 
-                        <div className="max-w-4xl mx-auto">
-                            {faqs.map((faq, index) => (
-                                <AnimatedOnScroll 
-                                    key={index} 
-                                    animationClass="animate-slide-up" 
-                                    delayClass={`delay-${index * 100}`}
-                                >
-                                    <div className="bg-white rounded-lg shadow-md mb-4">
-                                        <button
-                                            className="w-full p-6 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
-                                            onClick={() => handleFaqToggle(index)}
-                                        >
-                                            <span className="text-lg font-semibold text-gray-900">{faq.question}</span>
-                                            <ChevronRight 
-                                                className={`w-5 h-5 text-gray-500 transition-transform ${
-                                                    openFaq === index ? 'rotate-90' : ''
-                                                }`} 
-                                            />
-                                        </button>
-                                        {openFaq === index && (
-                                            <div className="px-6 pb-6">
-                                                <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </AnimatedOnScroll>
-                            ))}
+                            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200">
+                                <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6">
+                                    <button
+                                        className="w-full text-left flex justify-between items-center hover:bg-gray-50 transition-colors rounded-lg p-4"
+                                        onClick={() => handleFaqToggle(0)}
+                                    >
+                                        <span className="text-lg font-semibold text-gray-900">Why don't you show prices publicly?</span>
+                                        <ChevronRight 
+                                            className={`w-5 h-5 text-gray-500 transition-transform ${
+                                                openFaq === 0 ? 'rotate-90' : ''
+                                            }`} 
+                                        />
+                                    </button>
+                                    {openFaq === 0 && (
+                                        <div className="px-4 pb-4">
+                                            <p className="text-gray-600 leading-relaxed">
+                                                Because every company is different — we customize pricing to deliver the best value based on your needs.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </AnimatedOnScroll>
                         </div>
                     </div>
                 </section>
 
                 {/* CTA Section */}
-                <section className="py-20 bg-blue-600">
-                    <div className="container mx-auto px-4 text-center">
-                        <AnimatedOnScroll animationClass="animate-slide-up" threshold={0.3}>
-                            <h2 className="text-4xl font-bold text-white mb-4">
-                                Not sure which plan is right for you?
-                            </h2>
-                        </AnimatedOnScroll>
-                        <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200" threshold={0.3}>
-                            <p className="text-xl text-blue-100 mb-8">
-                                Give us a call and we'll help you choose the perfect plan for your needs.
-                            </p>
-                        </AnimatedOnScroll>
-                        <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-400" threshold={0.3}>
-                            <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <a
-                                    href="tel:+91-89292-08062"
-                                    className="px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-full shadow-xl hover:bg-gray-100 transition-all transform hover:scale-105 flex items-center justify-center"
-                                >
-                                    <Phone className="w-5 h-5 mr-2" />
-                                    +91 89292 08062
-                                </a>
-                                <a
-                                    href="mailto:sales@idms.com"
-                                    className="px-8 py-4 border-2 border-white text-white text-lg font-semibold rounded-full hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105 flex items-center justify-center"
-                                >
-                                    <Mail className="w-5 h-5 mr-2" />
-                                    sales@idms.com
-                                </a>
-                            </div>
-                        </AnimatedOnScroll>
+                <section className="py-16 bg-blue-600">
+                    <div className="container mx-auto px-4">
+                        <div className="max-w-4xl mx-auto text-center">
+                            <AnimatedOnScroll animationClass="animate-slide-up" threshold={0.3}>
+                                <h2 className="text-3xl font-bold text-white mb-4">
+                                    Ready to get started?
+                                </h2>
+                            </AnimatedOnScroll>
+                            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-200" threshold={0.3}>
+                                <p className="text-lg text-blue-100 mb-8">
+                                    Tell us a few details, and we'll prepare your personalized pricing plan.
+                                </p>
+                            </AnimatedOnScroll>
+                            <AnimatedOnScroll animationClass="animate-slide-up" delayClass="delay-400" threshold={0.3}>
+                                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                    <button className="px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-100 transition-all transform hover:scale-105">
+                                        Request a Custom Quote
+                                    </button>
+                                    <a
+                                        href="tel:+91-89292-08062"
+                                        className="px-8 py-4 border-2 border-white text-white text-lg font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105 flex items-center justify-center"
+                                    >
+                                        <Phone className="w-5 h-5 mr-2" />
+                                        Call Us Now
+                                    </a>
+                                </div>
+                            </AnimatedOnScroll>
+                        </div>
                     </div>
                 </section>
             </main>
@@ -670,20 +698,17 @@ export default function PricingPage() {
                 <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-5 gap-8">
                     {/* Brand and Social */}
                     <div>
-                        <div className="flex items-center space-x-3 mb-4">
-                            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-2 rounded-lg">
-                                <Database className="w-6 h-6 text-white" />
+                        <Link href="/">
+                            <div className="relative w-48 h-16 mb-4 cursor-pointer">
+                                <Image
+                                    src="/hrlogo.png" 
+                                    alt="IDMS Logo and Brand Statement"
+                                    fill 
+                                    style={{ objectFit: 'contain' }}
+                                    className="w-full h-full"
+                                />
                             </div>
-                            <h3 className="text-2xl font-bold text-blue-400">IDMS</h3>
-                        </div>
-                        <p className="text-gray-400 text-sm mb-4">
-                            Intelligent Data Management System
-                        </p>
-                        <div className="flex space-x-3">
-                            <Globe className="w-5 h-5 text-gray-400 hover:text-blue-400 cursor-pointer" />
-                            <Zap className="w-5 h-5 text-gray-400 hover:text-blue-400 cursor-pointer" />
-                            <Heart className="w-5 h-5 text-gray-400 hover:text-blue-400 cursor-pointer" />
-                        </div>
+                        </Link>
                     </div>
 
                     {/* Company Links */}
@@ -701,10 +726,10 @@ export default function PricingPage() {
                     <div>
                         <h4 className="font-semibold text-lg mb-4">Products</h4>
                         <ul className="space-y-2 text-gray-400">
-                            <li><a href="#data-management" className="hover:text-blue-400 transition-colors">Data Management</a></li>
-                            <li><a href="#hr-management" className="hover:text-blue-400 transition-colors">HR Management</a></li>
-                            <li><a href="#finance-accounting" className="hover:text-blue-400 transition-colors">Finance & Accounting</a></li>
-                            <li><a href="#analytics-reporting" className="hover:text-blue-400 transition-colors">Analytics & Reporting</a></li>
+                            {/* Using a selection of the detailed products for the footer list */}
+                            {detailedProducts.slice(0, 4).map(item => (
+                                <li key={item.id}><a href={item.href} className="hover:text-blue-400 transition-colors">{item.title}</a></li>
+                            ))}
                         </ul>
                     </div>
 
