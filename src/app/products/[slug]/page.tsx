@@ -3,14 +3,6 @@
 import { notFound } from 'next/navigation';
 import { Database, Users, DollarSign, Store, Target, BarChart3, FileText, Shield, Settings } from 'lucide-react';
 
-// **CRITICAL FIX:** Define the correct interface locally to prevent conflict
-// with any incorrectly defined global 'PageProps' or 'Promise' constraint.
-interface ProductDetailPageProps {
-    params: {
-        slug: string;
-    };
-}
-
 // Defines the metadata for each product slug
 const productMeta: Record<string, { title: string; description: string; icon: any; }> = {
   'data-management': { title: 'Data Management', description: 'Centralize and organize all your business data in one secure platform.', icon: Database },
@@ -24,13 +16,15 @@ const productMeta: Record<string, { title: string; description: string; icon: an
   'integration-tools': { title: 'Integration Tools', description: 'Seamlessly integrate with your existing business tools.', icon: Settings },
 };
 
-// Use the explicit local interface
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
+// CRITICAL FIX: Use the INLINE type definition to prevent conflict 
+// with the global 'PageProps' type that is incorrectly defined as a Promise.
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
   const meta = productMeta[params.slug];
   
   // If the slug doesn't match any product, show Next.js 404 page
   if (!meta) return notFound();
   
+  // Lucide icons are passed as components, so use a capital letter variable
   const Icon = meta.icon;
   
   return (
