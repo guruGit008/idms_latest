@@ -50,9 +50,9 @@ interface ApiResponse<T> {
 }
 
 // API Configuration
-// FIX: Ensure API_BASE_URL ends with http://localhost:8080 OR the path starts with a slash.
+// FIX: Ensure API_BASE_URL ends with https://dev.tirangaidms.com OR the path starts with a slash.
 // Since the environment variable likely doesn't have the slash, we fix the class below.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.tirangaidms.com';
 
 // ----------------------------------------------------------------------
 // API Service & Helper Components 

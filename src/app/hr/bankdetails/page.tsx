@@ -7,7 +7,7 @@ import { Search, CreditCard, X, Edit } from "lucide-react";
 // Change APIURL from localhost to a generic placeholder URL.
 // When running in a sandboxed environment, localhost access is typically restricted.
 // Please replace this with your live or externally accessible backend URL.
-const APIURL = "http://localhost:8080"; 
+const APIURL = "https://dev.tirangaidms.com"; 
 
 interface BankDetail {
   id: number;
