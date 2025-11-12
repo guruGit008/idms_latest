@@ -39,7 +39,7 @@ interface Employee {
     joiningDate: string;
     relievingDate?: string; // Optional
     status: string; // Joining, Active, Relieving
-    dateOfBirth: string; // <-- ADDED dateOfBirth to interface
+    dateOfBirth: string; 
 }
 
 interface ApiResponse<T> {
@@ -50,32 +50,31 @@ interface ApiResponse<T> {
 }
 
 // API Configuration
-// FIX: Ensure API_BASE_URL ends with https://dev.tirangaidms.com OR the path starts with a slash.
-// Since the environment variable likely doesn't have the slash, we fix the class below.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.tirangaidms.com';
 
 // ----------------------------------------------------------------------
-// API Service & Helper Components 
+// API Service & Helper Components
 // ----------------------------------------------------------------------
 
 class ApiService {
     private baseURL: string;
 
     constructor(baseURL: string) {
-        // Ensure baseURL does NOT end with a slash, we'll add it in the methods.
+        // Ensure baseURL does NOT end with a slash
         this.baseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
     }
-    
+   
     private getJsonHeaders(): HeadersInit {
         return {
             'Content-Type': 'application/json',
         };
     }
-    
+   
     private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
         if (!response.ok) {
             if (response.status === 401) {
                 if (typeof window !== 'undefined') {
+                    // Redirect to login on authentication failure
                     window.location.href = '/login';
                 }
                 throw new Error('Authentication failed. Please login again.');
@@ -104,34 +103,31 @@ class ApiService {
             };
         }
     }
-    
+   
     async getEmployeeProfile(employeeId: string): Promise<ApiResponse<Employee>> {
-        // ⭐ FIX: Added '/' between this.baseURL and the rest of the path
         const response = await fetch(`${this.baseURL}/api/employees/byEmployeeId/${employeeId}`, {
             method: 'GET',
             headers: this.getJsonHeaders(),
         });
         return this.handleResponse<Employee>(response);
     }
-    
+   
     async updateEmployeeProfile(id: number, data: Partial<Employee>, photoFile?: File): Promise<ApiResponse<Employee>> {
         const formData = new FormData();
         formData.append('employee', JSON.stringify(data));
         if (photoFile) {
             formData.append('photo', photoFile);
         }
-        // ⭐ FIX: Added '/' between this.baseURL and the rest of the path
         const response = await fetch(`${this.baseURL}/api/employees/${id}`, {
             method: 'PUT',
             body: formData,
         });
         return this.handleResponse<Employee>(response);
     }
-    
+   
     async uploadProfilePhoto(employeeId: string, file: File): Promise<ApiResponse<{ profilePhotoUrl: string }>> {
         const formData = new FormData();
         formData.append('profilePhoto', file);
-        // ⭐ FIX: Added '/' between this.baseURL and the rest of the path
         const response = await fetch(`${this.baseURL}/api/employees/${employeeId}/photo`, {
             method: 'POST',
             body: formData,
@@ -204,7 +200,7 @@ const EditProfileForm: React.FC<{
     onCancel: () => void;
     isLoading: boolean;
 }> = ({ employee, onSave, onCancel, isLoading }) => {
-    
+   
     // Initialize form data with all employee fields to ensure all required fields for the backend PUT are sent
     const [formData, setFormData] = useState<Partial<Employee>>(employee);
     const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
@@ -213,9 +209,9 @@ const EditProfileForm: React.FC<{
 
     // Fields the employee is ALLOWED to edit
     const editableFields: (keyof Employee)[] = [
-        'employeeName', 'email', 'phoneNumber', 'bloodGroup', 
+        'employeeName', 'email', 'phoneNumber', 'bloodGroup',
         'currentAddress', 'permanentAddress',
-        'dateOfBirth', // <-- FIX: Added dateOfBirth to editable fields
+        'dateOfBirth',
     ];
 
     // Fields that are HR-controlled (read-only)
@@ -248,21 +244,32 @@ const EditProfileForm: React.FC<{
         bloodGroup: 'Blood Group',
         currentAddress: 'Current Address',
         permanentAddress: 'Permanent Address',
-        
-        dateOfBirth: 'Date of Birth', // <-- ADDED LABEL
-        
+       
+        dateOfBirth: 'Date of Birth',
+       
         position: 'Position',
         department: 'Department',
         joiningDate: 'Joining Date',
         status: 'Status',
         relievingDate: 'Relieving Date',
     };
-    
+   
     const bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     const getDateFormat = (dateString: string | undefined) => {
         if (!dateString) return '';
         const date = new Date(dateString);
         return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+    };
+
+    // **Helper function to correctly build the image URL**
+    const buildImageUrl = (url: string | undefined) => {
+        if (!url) return undefined;
+        // If it's a blob URL (for local preview) or an absolute URL (http/https), use it directly
+        if (url.startsWith('blob:') || url.startsWith('http')) {
+            return url;
+        }
+        // Otherwise, prepend API_BASE_URL, ensuring no double slash
+        return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
 
@@ -273,7 +280,8 @@ const EditProfileForm: React.FC<{
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg relative mb-4">
                     {previewUrl ? (
                         <Image
-                            src={previewUrl.startsWith('blob:') ? previewUrl : (previewUrl.startsWith('http') ? previewUrl : `${API_BASE_URL}${previewUrl}`)}
+                            // **FIX APPLIED HERE:** Use the robust URL builder
+                            src={buildImageUrl(previewUrl) as string} 
                             alt="Profile Preview"
                             layout="fill"
                             objectFit="cover"
@@ -301,7 +309,7 @@ const EditProfileForm: React.FC<{
                     accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     disabled={isLoading}
-                    key={previewUrl} 
+                    key={previewUrl}
                 />
             </div>
 
@@ -310,14 +318,13 @@ const EditProfileForm: React.FC<{
                 <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Personal Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic Info Fields + Date of Birth */}
-                    {editableFields.filter(key => 
+                    {editableFields.filter(key =>
                         key !== 'permanentAddress' && key !== 'currentAddress' && key !== 'bloodGroup'
                     ).map((key) => (
                         <InputField
                             key={key}
                             id={key}
                             label={fieldLabels[key]!}
-                            // Check if field is dateOfBirth or joiningDate (if it were editable)
                             type={key.includes('Date') || key === 'dateOfBirth' ? 'date' : key === 'email' ? 'email' : key === 'phoneNumber' ? 'tel' : 'text'}
                             
                             // Use getDateFormat for date fields
@@ -327,7 +334,7 @@ const EditProfileForm: React.FC<{
                             disabled={isLoading}
                         />
                     ))}
-                    
+                   
                     {/* Blood Group Select */}
                     <div>
                         <label htmlFor="bloodGroup" className="block text-sm font-medium text-gray-700 mb-1">
@@ -380,10 +387,10 @@ const EditProfileForm: React.FC<{
                             type={key.includes('Date') ? 'date' : 'text'}
                             // Use getDateFormat helper for joiningDate/relievingDate
                             value={key.includes('Date') ? getDateFormat(formData[key] as string | undefined) : (formData[key] as string || '')}
-                            onChange={() => {}} 
-                            disabled={true} 
+                            onChange={() => {}}
+                            disabled={true}
                             isReadOnly={true}
-                       />
+                        />
                 ))}
             </div>
 
@@ -483,16 +490,14 @@ export default function EmployeeProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
-    // FIX: The apiService instance is already defined globally above the component, 
-    // but the useMemo hook was incorrectly creating a new one. Using the global instance.
-    // const apiService = useMemo(() => new ApiService(API_BASE_URL), []); 
+    // Use memoized instance of ApiService
     const apiServiceInstance = useMemo(() => new ApiService(API_BASE_URL), []);
 
     const loadEmployeeData = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            setIsEditMode(false); 
+            setIsEditMode(false);
 
             const employeeId = localStorage.getItem('employeeId');
             if (!employeeId) {
@@ -546,12 +551,12 @@ export default function EmployeeProfilePage() {
         setError(null);
 
         try {
-            // CRITICAL FIX: Merge ALL existing employee data with the edited data.
+            // CRITICAL: Merge ALL existing employee data with the edited data to ensure all required fields are sent back to the PUT endpoint.
             const fullPayload: Partial<Employee> = {
-                ...employee, 
-                ...data,     
+                ...employee,
+                ...data,    
             };
-            
+           
             const updateResponse = await apiServiceInstance.updateEmployeeProfile(employee.id, fullPayload, photoFile);
 
             if (updateResponse.success) {
@@ -615,7 +620,17 @@ export default function EmployeeProfilePage() {
             default: return 'bg-gray-50 text-gray-700 border-gray-200';
         }
     };
-    // --- End Utility Functions ---
+    
+    // **Helper function to correctly build the image URL for display mode**
+    const buildImageUrl = (url: string | undefined) => {
+        if (!url) return undefined;
+        // If it's an absolute URL (http/https), use it directly
+        if (url.startsWith('http')) {
+            return url;
+        }
+        // Otherwise, prepend API_BASE_URL, ensuring no double slash
+        return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
 
     // --- Loading and Error States ---
     if (error && !employee && !loading) {
@@ -692,7 +707,7 @@ export default function EmployeeProfilePage() {
                                </button>
                            </div>
                        )}
-                   
+                       
                        {isEditMode ? (
                            /* Edit Mode */
                            <div className="h-full">
@@ -720,10 +735,8 @@ export default function EmployeeProfilePage() {
                                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg">
                                                    {employee.profilePhotoUrl ? (
                                                        <Image
-                                                           src={employee.profilePhotoUrl.startsWith('http')
-                                                               ? employee.profilePhotoUrl
-                                                               : `${API_BASE_URL}/${employee.profilePhotoUrl}` // FIX: Added missing slash
-                                                           }
+                                                           // **FIX APPLIED HERE:** Use the robust URL builder
+                                                           src={buildImageUrl(employee.profilePhotoUrl) as string}
                                                            alt="Profile"
                                                            width={128}
                                                            height={128}
@@ -757,9 +770,9 @@ export default function EmployeeProfilePage() {
                                {/* Detailed Information Cards - Right Column */}
                                <div className="lg:col-span-2 space-y-8">
                                    {/* Personal Information Card */}
-                                   <InfoCard 
-                                       icon={<User className="w-6 h-6 text-blue-600" />} 
-                                       title="Personal Information" 
+                                   <InfoCard
+                                       icon={<User className="w-6 h-6 text-blue-600" />}
+                                       title="Personal Information"
                                        gradient="from-blue-50 to-indigo-50"
                                    >
                                        <DetailGroup>
@@ -776,9 +789,9 @@ export default function EmployeeProfilePage() {
                                    </InfoCard>
                                    
                                    {/* Professional Information Card (HR-Controlled) */}
-                                   <InfoCard 
-                                       icon={<Briefcase className="w-6 h-6 text-emerald-600" />} 
-                                       title="Professional Information" 
+                                   <InfoCard
+                                       icon={<Briefcase className="w-6 h-6 text-emerald-600" />}
+                                       title="Professional Information"
                                        gradient="from-emerald-50 to-teal-50"
                                    >
                                        <DetailGroup>
@@ -799,9 +812,9 @@ export default function EmployeeProfilePage() {
                                    </InfoCard>
 
                                    {/* Address Information Card */}
-                                   <InfoCard 
-                                       icon={<MapPin className="w-6 h-6 text-purple-600" />} 
-                                       title="Address Information" 
+                                   <InfoCard
+                                       icon={<MapPin className="w-6 h-6 text-purple-600" />}
+                                       title="Address Information"
                                        gradient="from-purple-50 to-pink-50"
                                    >
                                        <div className="space-y-8">
@@ -823,3 +836,4 @@ export default function EmployeeProfilePage() {
         </div>
     );
 }
+
