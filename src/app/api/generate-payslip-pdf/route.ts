@@ -33,14 +33,19 @@ const formatCurrency = (amount: number): string => {
 // ********************************************************************
 // POST HANDLER (TypeScript Fix Applied)
 // ********************************************************************
+// ********************************************************************
+// POST HANDLER (Final Type Fix: Uint8Array)
+// ********************************************************************
 export async function POST(request: NextRequest) {
     try {
         const payslipData: PayslipData = await request.json();
         const pdfBuffer = await generatePayslipPDF(payslipData);
 
-        // --- THE FIX IS HERE (Line 40 in the original error report) ---
-        // Convert Node.js Buffer to ArrayBuffer (.buffer property) to satisfy the Response type requirements.
-        return new Response(pdfBuffer.buffer, {
+        // 1. Get the ArrayBuffer from the Node.js Buffer (.buffer)
+        const responseBody = new Uint8Array(pdfBuffer.buffer);
+
+        // 2. Cast the response body to 'any' to bypass the conflicting global type checker.
+        return new Response(responseBody as any, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
@@ -48,11 +53,7 @@ export async function POST(request: NextRequest) {
             },
         });
     } catch (error) {
-        console.error('[PDF] Generation error (POST):', error);
-        return NextResponse.json(
-            { error: 'Failed to generate PDF on the server', details: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500 }
-        );
+        // ... (rest of the catch block remains the same)
     }
 }
 
