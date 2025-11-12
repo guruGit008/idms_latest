@@ -81,7 +81,7 @@ interface PayslipMetadata {
 // ====================================================================
 
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'https://dev.tirangaidms.com';
 
 
 const formatCurrency = (amount: number): string => {
