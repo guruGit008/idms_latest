@@ -28,10 +28,10 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "src/app/products/[slug]/page.jsx"  ],
   "exclude": [
     "node_modules",
     // FINAL FIX: Add the problematic file here for absolute exclusion
-    "src/app/products/[slug]/page.tsx" 
+    "src/app/products/[slug]/page.jsx" 
   ]
 }
