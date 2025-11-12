@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image'; // Import the Next.js Image component
 
+
 interface Employee {
     id: string | number;
     employeeName?: string;
@@ -26,6 +27,7 @@ interface Employee {
     profilePhotoUrl?: string;
 }
 
+
 interface StatCardProps {
     icon: React.ComponentType<{ className?: string }>;
     title: string;
@@ -35,12 +37,14 @@ interface StatCardProps {
     bgColor?: string;
 }
 
+
 interface Activity {
     icon: string;
     title: string;
     time: string;
     status: 'completed' | 'pending' | 'rejected';
 }
+
 
 const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
     Users,
@@ -52,6 +56,7 @@ const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = 
     // Note: GraduationCap was removed from imports
     Briefcase,
 };
+
 
 export default function HRDashboard() {
     const [totalWorkforce, setTotalWorkforce] = useState<number | null>(null);
@@ -68,28 +73,29 @@ export default function HRDashboard() {
     const [loadingActivities, setLoadingActivities] = useState(false);
     const [errorActivities, setErrorActivities] = useState<string | null>(null);
 
+
     useEffect(() => {
         const fetchDashboardData = async () => {
             setLoadingStats(true);
             setLoadingEmployees(true);
             try {
-                const employeesResponse = await fetch('https://dev.tirangaidms.comapi/employees');
+                const employeesResponse = await fetch('http://localhost:8080/api/employees');
                 if (!employeesResponse.ok) {
                     throw new Error('Failed to fetch employees');
                 }
                 const employeesData: Employee[] = await employeesResponse.json();
-                
+               
                 if (Array.isArray(employeesData)) {
                     setEmployees(employeesData);
                     setTotalWorkforce(employeesData.length);
-                    
+                   
                     // FIX: Explicitly use Employee type for map callback
                     const uniqueDepartments = Array.from(new Set(employeesData.map((e: Employee) => e.department || 'Unassigned')));
                     setDepartments(uniqueDepartments);
-                    
+                   
                     const oneMonthAgo = new Date();
                     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                    
+                   
                     // FIX: Explicitly use Employee type for filter callback
                     setNewHires(employeesData.filter((e: Employee) => e.joinDate && new Date(e.joinDate) > oneMonthAgo).length);
                 } else {
@@ -105,10 +111,11 @@ export default function HRDashboard() {
             }
         };
 
+
         const fetchActivities = async () => {
             setLoadingActivities(true);
             try {
-                const activitiesResponse = await fetch('https://dev.tirangaidms.comapi/activities');
+                const activitiesResponse = await fetch('http://localhost:8080/api/activities');
                 if (!activitiesResponse.ok) {
                     throw new Error('Failed to fetch activities');
                 }
@@ -122,9 +129,11 @@ export default function HRDashboard() {
             }
         };
 
+
         fetchDashboardData();
         fetchActivities();
     }, []);
+
 
     const filteredEmployees = employees.filter(employee => {
         const matchesSearch = employee.employeeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,6 +143,7 @@ export default function HRDashboard() {
             employee.department === selectedDepartment;
         return matchesSearch && matchesDepartment;
     });
+
 
     const StatCard = ({ icon: Icon, title, value, trend, color = 'slate', bgColor = 'bg-slate-50' }: StatCardProps) => (
         <div className="bg-white/90 rounded-xl p-6 border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-gray-200">
@@ -155,6 +165,7 @@ export default function HRDashboard() {
         </div>
     );
 
+
     return (
         <div className="min-h-screen bg-transparent">
             <div className="max-w-7xl mx-auto">
@@ -164,6 +175,7 @@ export default function HRDashboard() {
                         <p className="text-lg text-gray-600">Comprehensive workforce management and analytics overview</p>
                     </div>
                 </div>
+
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {loadingStats ? (
@@ -198,6 +210,7 @@ export default function HRDashboard() {
                         </>
                     )}
                 </div>
+
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2">
@@ -307,6 +320,7 @@ export default function HRDashboard() {
                         </div>
                     </div>
 
+
                     <div className="space-y-8">
                         <div className="bg-white/90 rounded-xl border border-gray-100 shadow-sm">
                             <div className="border-b border-gray-100 p-4 bg-gradient-to-r from-gray-50 to-white rounded-t-xl">
@@ -348,6 +362,7 @@ export default function HRDashboard() {
                             </div>
                         </div>
 
+
                         <div className="bg-white/90 rounded-xl border border-gray-100 shadow-sm">
                             <div className="border-b border-gray-100 p-4 bg-gradient-to-r from-gray-50 to-white rounded-t-xl">
                                 <h3 className="font-bold text-gray-900">Department Overview</h3>
@@ -375,3 +390,4 @@ export default function HRDashboard() {
         </div>
     );
 }
+
