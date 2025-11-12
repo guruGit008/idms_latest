@@ -39,7 +39,7 @@ interface Employee {
     joiningDate: string;
     relievingDate?: string; // Optional
     status: string; // Joining, Active, Relieving
-    dateOfBirth: string; 
+    dateOfBirth: string;
 }
 
 interface ApiResponse<T> {
@@ -52,29 +52,111 @@ interface ApiResponse<T> {
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://dev.tirangaidms.com';
 
+
 // ----------------------------------------------------------------------
-// API Service & Helper Components
+// 🛠️ Global Utilities & Constants (Moved Here to Resolve Scope Issues)
+// ----------------------------------------------------------------------
+
+// Fields the employee is ALLOWED to edit (Used for filtering the save payload)
+const EDITABLE_FIELDS: (keyof Employee)[] = [
+    'employeeName', 'email', 'phoneNumber', 'bloodGroup',
+    'currentAddress', 'permanentAddress',
+    'dateOfBirth',
+];
+
+const getDateFormat = (dateString: string | undefined): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+};
+
+/**
+ * Helper function to correctly build the image URL for Next/Image component.
+ */
+const buildImageUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined;
+    if (url.startsWith('blob:') || url.startsWith('http')) {
+        return url;
+    }
+    const sanitizedBaseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    return `${sanitizedBaseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
+/** * Format date for display (e.g., "June 23, 2024") - FIX: MOVED HERE
+ */
+const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not specified';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+};
+
+/**
+ * Calculate experience from joining date - FIX: MOVED HERE
+ */
+const calculateExperience = (joiningDate: string) => {
+    if (!joiningDate) return 'Not specified';
+    const joinDate = new Date(joiningDate);
+    const today = new Date();
+    let years = today.getFullYear() - joinDate.getFullYear();
+    let months = today.getMonth() - joinDate.getMonth();
+
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    const yearsString = years > 0 ? `${years} year${years !== 1 ? 's' : ''}` : '';
+    const monthsString = months > 0 ? `${months} month${months !== 1 ? 's' : ''}` : '';
+
+    if (yearsString && monthsString) {
+        return `${yearsString}, ${monthsString}`;
+    } else if (yearsString) {
+        return yearsString;
+    } else if (monthsString) {
+        return monthsString;
+    } else {
+        return 'Less than a month';
+    }
+};
+
+/**
+ * Get CSS color class for status badge - FIX: MOVED HERE
+ */
+const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+        case 'active': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        case 'joining': return 'bg-blue-50 text-blue-700 border-blue-200';
+        case 'relieving': return 'bg-amber-50 text-amber-700 border-amber-200';
+        default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+};
+
+// ----------------------------------------------------------------------
+// ☁️ API Service
 // ----------------------------------------------------------------------
 
 class ApiService {
     private baseURL: string;
 
     constructor(baseURL: string) {
-        // Ensure baseURL does NOT end with a slash
         this.baseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
     }
-   
+    
     private getJsonHeaders(): HeadersInit {
         return {
             'Content-Type': 'application/json',
         };
     }
-   
+    
     private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
         if (!response.ok) {
             if (response.status === 401) {
                 if (typeof window !== 'undefined') {
-                    // Redirect to login on authentication failure
                     window.location.href = '/login';
                 }
                 throw new Error('Authentication failed. Please login again.');
@@ -93,6 +175,7 @@ class ApiService {
             throw new Error(errorMessage);
         }
         const data = await response.json();
+        // Normalize API response structure
         if (data.success !== undefined) {
             return data;
         } else {
@@ -103,7 +186,7 @@ class ApiService {
             };
         }
     }
-   
+    
     async getEmployeeProfile(employeeId: string): Promise<ApiResponse<Employee>> {
         const response = await fetch(`${this.baseURL}/api/employees/byEmployeeId/${employeeId}`, {
             method: 'GET',
@@ -111,33 +194,29 @@ class ApiService {
         });
         return this.handleResponse<Employee>(response);
     }
-   
+    
     async updateEmployeeProfile(id: number, data: Partial<Employee>, photoFile?: File): Promise<ApiResponse<Employee>> {
         const formData = new FormData();
-        formData.append('employee', JSON.stringify(data));
+        
+        formData.append('employee', JSON.stringify(data)); 
+        
         if (photoFile) {
             formData.append('photo', photoFile);
         }
         const response = await fetch(`${this.baseURL}/api/employees/${id}`, {
             method: 'PUT',
-            body: formData,
+            body: formData, 
         });
         return this.handleResponse<Employee>(response);
-    }
-   
-    async uploadProfilePhoto(employeeId: string, file: File): Promise<ApiResponse<{ profilePhotoUrl: string }>> {
-        const formData = new FormData();
-        formData.append('profilePhoto', file);
-        const response = await fetch(`${this.baseURL}/api/employees/${employeeId}/photo`, {
-            method: 'POST',
-            body: formData,
-        });
-        return this.handleResponse<{ profilePhotoUrl: string }>(response);
     }
 }
 
 const apiService = new ApiService(API_BASE_URL);
 
+
+// ----------------------------------------------------------------------
+// 🧱 Helper Components (Inputs)
+// ----------------------------------------------------------------------
 
 /** Input Field Helper */
 const InputField: React.FC<{
@@ -162,6 +241,7 @@ const InputField: React.FC<{
             className={`mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2 px-3 sm:text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'focus:ring-blue-500 focus:border-blue-500'}`}
             required={!isReadOnly}
             disabled={disabled || isReadOnly}
+            readOnly={isReadOnly}
         />
     </div>
 );
@@ -188,33 +268,28 @@ const TextAreaField: React.FC<{
             className={`mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2 px-3 sm:text-sm ${isReadOnly ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'focus:ring-blue-500 focus:border-blue-500'}`}
             required={!isReadOnly}
             disabled={disabled || isReadOnly}
+            readOnly={isReadOnly}
         />
     </div>
 );
 
 
-/** The Edit Form Component - Professional fields are Read-Only */
+// ----------------------------------------------------------------------
+// ✍️ Edit Form Component
+// ----------------------------------------------------------------------
+
 const EditProfileForm: React.FC<{
     employee: Employee;
     onSave: (data: Partial<Employee>, photoFile: File | undefined) => Promise<void>;
     onCancel: () => void;
     isLoading: boolean;
 }> = ({ employee, onSave, onCancel, isLoading }) => {
-   
-    // Initialize form data with all employee fields to ensure all required fields for the backend PUT are sent
+    
     const [formData, setFormData] = useState<Partial<Employee>>(employee);
     const [photoFile, setPhotoFile] = useState<File | undefined>(undefined);
     const [previewUrl, setPreviewUrl] = useState<string | undefined>(employee.profilePhotoUrl);
     const photoInputRef = useRef<HTMLInputElement>(null);
 
-    // Fields the employee is ALLOWED to edit
-    const editableFields: (keyof Employee)[] = [
-        'employeeName', 'email', 'phoneNumber', 'bloodGroup',
-        'currentAddress', 'permanentAddress',
-        'dateOfBirth',
-    ];
-
-    // Fields that are HR-controlled (read-only)
     const professionalFields: (keyof Employee)[] = [
         'position', 'department', 'joiningDate', 'status', 'relievingDate'
     ];
@@ -234,7 +309,30 @@ const EditProfileForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData, photoFile);
+        
+        const editablePayload: Partial<Employee> = {};
+        
+        // 1. Include the critical IDs and current photo details for the PUT endpoint
+        if (employee.id) {
+            editablePayload.id = employee.id;
+        }
+        if (employee.employeeId) {
+            editablePayload.employeeId = employee.employeeId;
+        }
+        editablePayload.profilePhotoUrl = employee.profilePhotoUrl;
+        editablePayload.profilePhotoPublicId = employee.profilePhotoPublicId;
+
+
+        // 2. Iterate and assign ONLY the editable fields from the form state
+        for (const key of EDITABLE_FIELDS) {
+            const payloadKey = key as keyof Partial<Employee>; 
+            
+            if (formData[payloadKey] !== undefined) {
+                 editablePayload[payloadKey] = formData[payloadKey] as any;
+            }
+        }
+        
+        onSave(editablePayload, photoFile);
     };
 
     const fieldLabels: { [key in keyof Employee]?: string } = {
@@ -244,34 +342,18 @@ const EditProfileForm: React.FC<{
         bloodGroup: 'Blood Group',
         currentAddress: 'Current Address',
         permanentAddress: 'Permanent Address',
-       
+        
         dateOfBirth: 'Date of Birth',
-       
+        
         position: 'Position',
         department: 'Department',
         joiningDate: 'Joining Date',
         status: 'Status',
         relievingDate: 'Relieving Date',
     };
-   
+    
     const bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-    const getDateFormat = (dateString: string | undefined) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
-    };
-
-    // **Helper function to correctly build the image URL**
-    const buildImageUrl = (url: string | undefined) => {
-        if (!url) return undefined;
-        // If it's a blob URL (for local preview) or an absolute URL (http/https), use it directly
-        if (url.startsWith('blob:') || url.startsWith('http')) {
-            return url;
-        }
-        // Otherwise, prepend API_BASE_URL, ensuring no double slash
-        return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-    };
-
+    
 
     return (
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
@@ -280,12 +362,11 @@ const EditProfileForm: React.FC<{
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg relative mb-4">
                     {previewUrl ? (
                         <Image
-                            // **FIX APPLIED HERE:** Use the robust URL builder
-                            src={buildImageUrl(previewUrl) as string} 
+                            src={buildImageUrl(previewUrl) as string}
                             alt="Profile Preview"
                             layout="fill"
                             objectFit="cover"
-                            unoptimized={!previewUrl.startsWith('http')}
+                            unoptimized={!previewUrl.startsWith('http')} 
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
@@ -318,18 +399,17 @@ const EditProfileForm: React.FC<{
                 <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Personal Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic Info Fields + Date of Birth */}
-                    {editableFields.filter(key =>
+                    {EDITABLE_FIELDS.filter(key =>
                         key !== 'permanentAddress' && key !== 'currentAddress' && key !== 'bloodGroup'
                     ).map((key) => (
                         <InputField
                             key={key}
                             id={key}
                             label={fieldLabels[key]!}
-                            type={key.includes('Date') || key === 'dateOfBirth' ? 'date' : key === 'email' ? 'email' : key === 'phoneNumber' ? 'tel' : 'text'}
-                            
-                            // Use getDateFormat for date fields
-                            value={key.includes('Date') || key === 'dateOfBirth' ? getDateFormat(formData[key] as string | undefined) : (formData[key] as string || '')}
-                            
+                            type={key === 'dateOfBirth' ? 'date' : key === 'email' ? 'email' : key === 'phoneNumber' ? 'tel' : 'text'}
+                           
+                            value={key === 'dateOfBirth' ? getDateFormat(formData[key] as string | undefined) : (formData[key] as string || '')}
+                           
                             onChange={handleChange}
                             disabled={isLoading}
                         />
@@ -380,17 +460,17 @@ const EditProfileForm: React.FC<{
             <h3 className="text-lg font-bold text-gray-900 border-b pb-2 pt-4">Professional Details (HR Controlled)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {professionalFields.map((key) => (
-                       <InputField
-                            key={key}
-                            id={key}
-                            label={fieldLabels[key]!}
-                            type={key.includes('Date') ? 'date' : 'text'}
-                            // Use getDateFormat helper for joiningDate/relievingDate
-                            value={key.includes('Date') ? getDateFormat(formData[key] as string | undefined) : (formData[key] as string || '')}
-                            onChange={() => {}}
-                            disabled={true}
-                            isReadOnly={true}
-                        />
+                           <InputField
+                                key={key}
+                                id={key}
+                                label={fieldLabels[key]!}
+                                type={key.includes('Date') ? 'date' : 'text'}
+                                // Read-only fields should always use the source employee object
+                                value={key.includes('Date') ? getDateFormat(employee[key] as string | undefined) : (employee[key] as string || '')}
+                                onChange={() => {}} 
+                                disabled={true}
+                                isReadOnly={true}
+                            />
                 ))}
             </div>
 
@@ -428,7 +508,7 @@ const EditProfileForm: React.FC<{
 
 
 // ----------------------------------------------------------------------
-// Profile View Helper Components (for clean rendering)
+// 👁️ Profile View Helper Components
 // ----------------------------------------------------------------------
 
 const DetailItem: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
@@ -478,7 +558,7 @@ const Detail: React.FC<{ keyName: string, value?: string, icon?: React.ReactNode
 );
 
 // ----------------------------------------------------------------------
-// Main Employee Profile Page Component
+// 🏠 Main Employee Profile Page Component
 // ----------------------------------------------------------------------
 
 export default function EmployeeProfilePage() {
@@ -538,9 +618,6 @@ export default function EmployeeProfilePage() {
         setError(null);
     };
 
-    /**
-     * @description This save function ensures the old photo URL and HR-controlled fields are preserved.
-     */
     const handleSaveProfile = async (data: Partial<Employee>, photoFile?: File) => {
         if (!employee || !employee.id) {
             setError('Employee data or ID is missing. Cannot save.');
@@ -551,13 +628,7 @@ export default function EmployeeProfilePage() {
         setError(null);
 
         try {
-            // CRITICAL: Merge ALL existing employee data with the edited data to ensure all required fields are sent back to the PUT endpoint.
-            const fullPayload: Partial<Employee> = {
-                ...employee,
-                ...data,    
-            };
-           
-            const updateResponse = await apiServiceInstance.updateEmployeeProfile(employee.id, fullPayload, photoFile);
+            const updateResponse = await apiServiceInstance.updateEmployeeProfile(employee.id, data, photoFile);
 
             if (updateResponse.success) {
                 setEmployee(updateResponse.data);
@@ -572,66 +643,7 @@ export default function EmployeeProfilePage() {
             setSaving(false);
         }
     };
-
-
-    // --- Utility Functions ---
-    const formatDate = (dateString: string) => {
-        if (!dateString) return 'Not specified';
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Invalid Date';
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    };
-
-    const calculateExperience = (joiningDate: string) => {
-        if (!joiningDate) return 'Not specified';
-        const joinDate = new Date(joiningDate);
-        const today = new Date();
-        let years = today.getFullYear() - joinDate.getFullYear();
-        let months = today.getMonth() - joinDate.getMonth();
-
-        if (months < 0) {
-            years--;
-            months += 12;
-        }
-
-        const yearsString = years > 0 ? `${years} year${years !== 1 ? 's' : ''}` : '';
-        const monthsString = months > 0 ? `${months} month${months !== 1 ? 's' : ''}` : '';
-
-        if (yearsString && monthsString) {
-            return `${yearsString}, ${monthsString}`;
-        } else if (yearsString) {
-            return yearsString;
-        } else if (monthsString) {
-            return monthsString;
-        } else {
-            return 'Less than a month';
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case 'active': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            case 'joining': return 'bg-blue-50 text-blue-700 border-blue-200';
-            case 'relieving': return 'bg-amber-50 text-amber-700 border-amber-200';
-            default: return 'bg-gray-50 text-gray-700 border-gray-200';
-        }
-    };
     
-    // **Helper function to correctly build the image URL for display mode**
-    const buildImageUrl = (url: string | undefined) => {
-        if (!url) return undefined;
-        // If it's an absolute URL (http/https), use it directly
-        if (url.startsWith('http')) {
-            return url;
-        }
-        // Otherwise, prepend API_BASE_URL, ensuring no double slash
-        return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-    };
-
     // --- Loading and Error States ---
     if (error && !employee && !loading) {
         return (
@@ -688,152 +700,152 @@ export default function EmployeeProfilePage() {
 
             {/* Content Container */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                   <div className={`bg-white/70 rounded-2xl shadow-xl border border-gray-200 ${isEditMode ? '' : 'p-8'}`}>
-                       
-                       {/* Header for View Mode */}
-                       {!isEditMode && (
-                           <div className="mb-8 flex justify-between items-center px-0">
-                               <div>
-                                   <h1 className="text-3xl font-bold text-gray-900">Employee Profile</h1>
-                                   <p className="text-gray-600 mt-2">View and manage your personal information</p>
-                                   <p className="text-sm text-gray-500 mt-1">Employee ID: {employee.employeeId}</p>
-                               </div>
-                               <button
-                                   onClick={handleEditClick}
-                                   className="inline-flex items-center px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold shadow-md"
-                               >
-                                   <Edit className="w-5 h-5 mr-2" />
-                                   Edit Profile
-                               </button>
-                           </div>
-                       )}
-                       
-                       {isEditMode ? (
-                           /* Edit Mode */
-                           <div className="h-full">
-                                <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center">
-                                    <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-                                        <Edit className="w-6 h-6 mr-3 text-blue-600" />
-                                        Edit Personal Information
-                                    </h1>
-                                </div>
-                                <EditProfileForm
-                                    employee={employee}
-                                    onSave={handleSaveProfile}
-                                    onCancel={handleCancelEdit}
-                                    isLoading={saving}
-                                />
-                           </div>
-                       ) : (
-                           /* View Mode */
-                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                               {/* Profile Summary Card - Left Column */}
-                               <div className="lg:col-span-1">
-                                   <div className="bg-white bg-opacity-90 rounded-2xl shadow-sm border border-gray-200 p-8 sticky top-8">
-                                       <div className="text-center mb-8">
-                                           <div className="relative inline-block mb-6">
-                                               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg">
-                                                   {employee.profilePhotoUrl ? (
-                                                       <Image
-                                                           // **FIX APPLIED HERE:** Use the robust URL builder
-                                                           src={buildImageUrl(employee.profilePhotoUrl) as string}
-                                                           alt="Profile"
-                                                           width={128}
-                                                           height={128}
-                                                           className="w-full h-full object-cover"
-                                                           unoptimized={!employee.profilePhotoUrl.startsWith('http')}
-                                                       />
-                                                   ) : (
-                                                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-3xl font-bold">
-                                                           {employee.employeeName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                                       </div>
-                                                   )}
-                                               </div>
-                                               <div className={`absolute -bottom-2 -right-2 px-3 py-1 text-xs font-semibold rounded-full border-2 border-white shadow-sm ${getStatusColor(employee.status)}`}>
-                                                   {employee.status}
-                                               </div>
-                                           </div>
-                                           {/* Professional Summary in Sidebar */}
-                                           <h2 className="text-2xl font-bold text-gray-900 mb-2">{employee.employeeName}</h2>
-                                           <p className="text-blue-600 font-semibold text-lg mb-1">{employee.position}</p>
-                                           <p className="text-gray-600 font-medium">{employee.department}</p>
-                                       </div>
+                  <div className={`bg-white/70 rounded-2xl shadow-xl border border-gray-200 ${isEditMode ? '' : 'p-8'}`}>
+                      
+                      {/* Header for View Mode */}
+                      {!isEditMode && (
+                          <div className="mb-8 flex justify-between items-center px-0">
+                              <div>
+                                  <h1 className="text-3xl font-bold text-gray-900">Employee Profile</h1>
+                                  <p className="text-gray-600 mt-2">View and manage your personal information</p>
+                                  <p className="text-sm text-gray-500 mt-1">Employee ID: {employee.employeeId}</p>
+                              </div>
+                              <button
+                                  onClick={handleEditClick}
+                                  className="inline-flex items-center px-5 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold shadow-md"
+                              >
+                                  <Edit className="w-5 h-5 mr-2" />
+                                  Edit Profile
+                              </button>
+                          </div>
+                      )}
+                      
+                      {isEditMode ? (
+                          /* Edit Mode */
+                          <div className="h-full">
+                              <div className="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center">
+                                  <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                                      <Edit className="w-6 h-6 mr-3 text-blue-600" />
+                                      Edit Personal Information
+                                  </h1>
+                              </div>
+                              <EditProfileForm
+                                  employee={employee}
+                                  onSave={handleSaveProfile}
+                                  onCancel={handleCancelEdit}
+                                  isLoading={saving}
+                              />
+                          </div>
+                      ) : (
+                          /* View Mode */
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                              {/* Profile Summary Card - Left Column */}
+                              <div className="lg:col-span-1">
+                                  <div className="bg-white bg-opacity-90 rounded-2xl shadow-sm border border-gray-200 p-8 sticky top-8">
+                                      <div className="text-center mb-8">
+                                          <div className="relative inline-block mb-6">
+                                              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg">
+                                                  {employee.profilePhotoUrl ? (
+                                                      <Image
+                                                          src={buildImageUrl(employee.profilePhotoUrl) as string}
+                                                          alt="Profile"
+                                                          width={128}
+                                                          height={128}
+                                                          className="w-full h-full object-cover"
+                                                          unoptimized={!employee.profilePhotoUrl.startsWith('http')}
+                                                      />
+                                                  ) : (
+                                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white text-3xl font-bold">
+                                                          {employee.employeeName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                                      </div>
+                                                  )}
+                                              </div>
+                                              <div className={`absolute -bottom-2 -right-2 px-3 py-1 text-xs font-semibold rounded-full border-2 border-white shadow-sm ${getStatusColor(employee.status)}`}>
+                                                  {employee.status}
+                                              </div>
+                                          </div>
+                                          {/* Professional Summary in Sidebar */}
+                                          <h2 className="text-2xl font-bold text-gray-900 mb-2">{employee.employeeName}</h2>
+                                          <p className="text-blue-600 font-semibold text-lg mb-1">{employee.position}</p>
+                                          <p className="text-gray-600 font-medium">{employee.department}</p>
+                                      </div>
 
-                                       <div className="border-t border-gray-100 pt-6 space-y-6">
-                                           <DetailItem icon={<Mail className="w-4 h-4 text-blue-600" />} label="Email" value={employee.email} />
-                                           <DetailItem icon={<Phone className="w-4 h-4 text-blue-600" />} label="Phone" value={employee.phoneNumber} />
-                                           <DetailItem icon={<Building className="w-4 h-4 text-blue-600" />} label="Employee ID" value={employee.employeeId} />
-                                       </div>
-                                   </div>
-                               </div>
+                                      <div className="border-t border-gray-100 pt-6 space-y-6">
+                                          <DetailItem icon={<Mail className="w-4 h-4 text-blue-600" />} label="Email" value={employee.email} />
+                                          <DetailItem icon={<Phone className="w-4 h-4 text-blue-600" />} label="Phone" value={employee.phoneNumber} />
+                                          <DetailItem icon={<Building className="w-4 h-4 text-blue-600" />} label="Employee ID" value={employee.employeeId} />
+                                      </div>
+                                  </div>
+                              </div>
 
-                               {/* Detailed Information Cards - Right Column */}
-                               <div className="lg:col-span-2 space-y-8">
-                                   {/* Personal Information Card */}
-                                   <InfoCard
-                                       icon={<User className="w-6 h-6 text-blue-600" />}
-                                       title="Personal Information"
-                                       gradient="from-blue-50 to-indigo-50"
-                                   >
-                                       <DetailGroup>
-                                           <Detail keyName="Full Name" value={employee.employeeName} />
-                                           <Detail keyName="Email Address" value={employee.email} />
-                                           <Detail keyName="Phone Number" value={employee.phoneNumber} />
-                                           <Detail keyName="Date of Birth" value={formatDate(employee.dateOfBirth)} icon={<Calendar className="w-4 h-4 text-gray-400 mr-2" />} /> {/* Display Date of Birth */}
-                                           <Detail keyName="Blood Group">
-                                               <span className="inline-flex px-4 py-2 rounded-xl text-sm font-semibold bg-red-50 text-red-700 border border-red-200">
-                                                   {employee.bloodGroup}
-                                               </span>
-                                           </Detail>
-                                       </DetailGroup>
-                                   </InfoCard>
-                                   
-                                   {/* Professional Information Card (HR-Controlled) */}
-                                   <InfoCard
-                                       icon={<Briefcase className="w-6 h-6 text-emerald-600" />}
-                                       title="Professional Information"
-                                       gradient="from-emerald-50 to-teal-50"
-                                   >
-                                       <DetailGroup>
-                                           <Detail keyName="Position" value={employee.position} strong={true} />
-                                           <Detail keyName="Department" value={employee.department} />
-                                           <Detail keyName="Date of Joining" value={formatDate(employee.joiningDate)} icon={<Calendar className="w-4 h-4 text-gray-400 mr-2" />} />
-                                           <Detail keyName="Experience" value={calculateExperience(employee.joiningDate)} />
-                                           <Detail keyName="Status">
-                                               <span className={`inline-flex px-4 py-2 rounded-xl text-sm font-semibold border ${getStatusColor(employee.status)}`}>
-                                                   {employee.status}
-                                               </span>
-                                           </Detail>
-                                           {/* Display Relieving Date ONLY if the status is 'Relieving' */}
-                                           {employee.status.toLowerCase() === 'relieving' && employee.relievingDate && (
-                                               <Detail keyName="Relieving Date" value={formatDate(employee.relievingDate)} icon={<Calendar className="w-4 h-4 text-gray-400 mr-2" />} />
-                                           )}
-                                       </DetailGroup>
-                                   </InfoCard>
+                              {/* Detailed Information Cards - Right Column */}
+                              <div className="lg:col-span-2 space-y-8">
+                                  {/* Personal Information Card */}
+                                  <InfoCard
+                                      icon={<User className="w-6 h-6 text-blue-600" />}
+                                      title="Personal Information"
+                                      gradient="from-blue-50 to-indigo-50"
+                                  >
+                                      <DetailGroup>
+                                          <Detail keyName="Full Name" value={employee.employeeName} />
+                                          <Detail keyName="Email Address" value={employee.email} />
+                                          <Detail keyName="Phone Number" value={employee.phoneNumber} />
+                                          <Detail keyName="Date of Birth" value={formatDate(employee.dateOfBirth)} icon={<Calendar className="w-4 h-4 text-gray-400 mr-2" />} /> 
+                                          <Detail keyName="Blood Group">
+                                              <span className="inline-flex px-4 py-2 rounded-xl text-sm font-semibold bg-red-50 text-red-700 border border-red-200">
+                                                  {employee.bloodGroup}
+                                              </span>
+                                          </Detail>
+                                      </DetailGroup>
+                                  </InfoCard>
+                                  
+                                  {/* Professional Information Card (HR-Controlled) */}
+                                  <InfoCard
+                                      icon={<Briefcase className="w-6 h-6 text-emerald-600" />}
+                                      title="Professional Information"
+                                      gradient="from-emerald-50 to-teal-50"
+                                  >
+                                      <DetailGroup>
+                                          <Detail keyName="Position" value={employee.position} strong={true} />
+                                          <Detail keyName="Department" value={employee.department} />
+                                          <Detail keyName="Date of Joining" value={formatDate(employee.joiningDate)} icon={<Calendar className="w-4 h-4 text-gray-400 mr-2" />} />
+                                          <Detail keyName="Experience" value={calculateExperience(employee.joiningDate)} />
+                                          <Detail keyName="Status">
+                                              <span className={`inline-flex px-4 py-2 rounded-xl text-sm font-semibold border ${getStatusColor(employee.status)}`}>
+                                                  {employee.status}
+                                              </span>
+                                          </Detail>
+                                          {/* Display Relieving Date ONLY if the status is 'Relieving' */}
+                                          {employee.status.toLowerCase() === 'relieving' && employee.relievingDate && (
+                                              <Detail keyName="Relieving Date" value={formatDate(employee.relievingDate)} icon={<Calendar className="w-4 h-4 text-gray-400 mr-2" />} />
+                                          )}
+                                      </DetailGroup>
+                                  </InfoCard>
 
-                                   {/* Address Information Card */}
-                                   <InfoCard
-                                       icon={<MapPin className="w-6 h-6 text-purple-600" />}
-                                       title="Address Information"
-                                       gradient="from-purple-50 to-pink-50"
-                                   >
-                                       <div className="space-y-8">
-                                           <div>
-                                               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Current Address</label>
-                                               <p className="text-gray-900 font-medium text-base leading-relaxed">{employee.currentAddress || 'Not specified'}</p>
-                                           </div>
-                                           <div className="border-t border-gray-100 pt-8">
-                                               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Permanent Address</label>
-                                               <p className="text-gray-900 font-medium text-base leading-relaxed">{employee.permanentAddress || 'Not specified'}</p>
-                                           </div>
-                                       </div>
-                                   </InfoCard>
-                               </div>
-                           </div>
-                       )}
-                   </div>
+                                  {/* Address Information Card */}
+                                  <InfoCard
+                                      icon={<MapPin className="w-6 h-6 text-purple-600" />}
+                                      title="Address Information"
+                                      gradient="from-purple-50 to-pink-50"
+                                  >
+                                      <div className="space-y-8">
+                                          <div>
+                                              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Current Address</label>
+                                              <p className="text-gray-900 font-medium text-base leading-relaxed">{employee.currentAddress || 'Not specified'}</p>
+                                          </div>
+                                          <div className="border-t border-gray-100 pt-8">
+                                              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Permanent Address</label>
+                                              <p className="text-gray-900 font-medium text-base leading-relaxed">{employee.permanentAddress || 'Not specified'}</p>
+                                          </div>
+                                      </div>
+                                  </InfoCard>
+                              </div>
+                          </div>
+                      )}
+                  </div>
             </div>
         </div>
     );
 }
+
 
