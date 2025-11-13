@@ -6,37 +6,54 @@ const nextConfig = {
     },
     // 👆 END OF ADDED BLOCK
 
+    // *** FIX START: Added 'headers' configuration to prevent redirect loop behind Nginx proxy ***
+    async headers() {
+        return [
+            {
+                // Apply these headers to all routes
+                source: '/:path*',
+                headers: [
+                    // HSTS tells the browser to always use HTTPS for this domain.
+                    {
+                        key: 'Strict-Transport-Security',
+                        value: 'max-age=63072000; includeSubDomains; preload',
+                    },
+                ],
+            },
+        ];
+    },
+    // *** FIX END ***
+
     images: {
         // --- REMOVED DEPRECATED 'domains' ARRAY ---
-        
+
         remotePatterns: [
-            // 1. Cloudinary (Where your profile photos are stored)
+            // 1. Cloudinary
             {
                 protocol: "https",
                 hostname: "res.cloudinary.com",
-                pathname: "/**", // Allows all paths on Cloudinary
+                pathname: "/**",
             },
-            // 2. BACKEND API HOSTNAME (CRITICAL FIX)
-            // This is required for images served from the 'dev.tirangaidms.com' API.
-            {
-                protocol: "https",
-                hostname: "dev.tirangaidms.com", // CORRECTED to the full backend URL
-                pathname: "/**", // Allows all paths (e.g., /uploads, /assets, etc.)
-            },
-            // 3. Backend API on Port 8080 (Only needed if your API serves images on this port)
+            // 2. BACKEND API HOSTNAME
             {
                 protocol: "https",
                 hostname: "dev.tirangaidms.com",
-                port: "8080", // Include the port if your images are served on it
+                pathname: "/**", 
+            },
+            // 3. Backend API on Port 8080
+            {
+                protocol: "https",
+                hostname: "dev.tirangaidms.com",
+                port: "8080", 
                 pathname: "/**",
             },
-            // 4. Unsplash (External source you had in 'domains')
+            // 4. Unsplash
             {
                 protocol: "https",
                 hostname: "images.unsplash.com",
                 pathname: "/**",
             },
-            // 5. Localhost (For development testing)
+            // 5. Localhost
             {
                 protocol: "http",
                 hostname: "localhost",
